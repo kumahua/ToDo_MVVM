@@ -10,7 +10,6 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.*
 import com.example.todo.R
 import com.example.todo.data.models.TodoData
@@ -20,8 +19,6 @@ import com.example.todo.fragment.SharedViewModel
 import com.example.todo.fragment.list.adapter.ListAdapter
 import com.example.todo.utils.hideKeyboard
 import com.google.android.material.snackbar.Snackbar
-import jp.wasabeef.recyclerview.animators.SlideInUpAnimator
-import java.text.FieldPosition
 
 class ListFragment : Fragment(), SearchView.OnQueryTextListener {
 
@@ -47,11 +44,8 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
         mToDoViewModel.getAllData.observe(viewLifecycleOwner) { data ->
             mSharedViewModel.checkIfDatabaseEmpty(data)
             adapter.setData(data)
+            binding.recyclerView.scheduleLayoutAnimation()
         }
-
-//        mSharedViewModel.emptyDatabase.observe(viewLifecycleOwner) {
-//            showEmptyDatabaseViews(it)
-//        }
 
         hideKeyboard(requireActivity())
 
@@ -75,11 +69,6 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
             searchThroughDatabase(query)
         }
         return true
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        _binding = null
     }
 
     private fun setupMenu() {
@@ -185,5 +174,10 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
             binding.noDataImageView.visibility = View.GONE
             binding.noDataTextView.visibility = View.GONE
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
     }
 }
