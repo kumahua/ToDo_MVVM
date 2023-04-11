@@ -1,7 +1,6 @@
 package com.example.todo.fragment.update
 
 import android.app.AlertDialog
-import android.app.Dialog
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
@@ -13,7 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.todo.R
-import com.example.todo.data.models.Priority
 import com.example.todo.data.models.TodoData
 import com.example.todo.data.viewmodel.TodoViewModel
 import com.example.todo.databinding.FragmentUpdateBinding
@@ -26,7 +24,7 @@ class UpdateFragment : Fragment() {
     private val args by navArgs<UpdateFragmentArgs>()
 
     private val mSharedViewModel: SharedViewModel by viewModels()
-    private val mTodoViewModel: TodoViewModel by viewModels()
+    private val mToDoViewModel: TodoViewModel by viewModels()
 
     private var _binding: FragmentUpdateBinding? = null
     private val binding get() = _binding!!
@@ -35,43 +33,29 @@ class UpdateFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Inflate the layout for this fragment
+        // Data binding
         _binding = FragmentUpdateBinding.inflate(inflater, container, false)
+        binding.args = args
 
-        binding.currentTitleEt.setText(args.currentItem.title)
-        binding.currentDescriptionEt.setText(args.currentItem.description)
-        binding.currentPrioritiesSpinner.apply {
-            setSelection(mSharedViewModel.parsePriorityToInt(args.currentItem.priority))
-            onItemSelectedListener = mSharedViewModel.listener
-        }
+        // Spinner Item Selected Listener
+        binding.currentPrioritiesSpinner.onItemSelectedListener = mSharedViewModel.listener
 
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupMenu()
-    }
-
-    private fun setupMenu() {
-        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
-            override fun onPrepareMenu(menu: Menu) {
-                // Handle for example visibility of menu items
-            }
-
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object: MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.update_fragment_menu, menu)
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                // Validate and handle the selected menu item
                 when (menuItem.itemId) {
-                    R.id.menu_save -> {
-                        updateItem()
-                    }
-                    R.id.menu_delete -> {
-                        confirmItemRemoval()
-                    }
+                    R.id.menu_save -> updateItem()
+                    R.id.menu_delete -> confirmItemRemoval()
+                    android.R.id.home -> requireActivity().onBackPressed()
                 }
                 return true
             }
@@ -79,47 +63,49 @@ class UpdateFragment : Fragment() {
     }
 
     private fun updateItem() {
-        val title = currentTitleEt.text.toString()
-        val description = currentDescriptionEt.text.toString()
-        val getPriority = currentPrioritiesSpinner.selectedItem.toString()
+        val title = binding.currentTitleEt.text.toString()
+        val description = binding.currentDescriptionEt.text.toString()
+        val getPriority = binding.currentPrioritiesSpinner.selectedItem.toString()
 
         val validation = mSharedViewModel.verifyDataFromUser(title, description)
-
         if (validation) {
+            // Update Current Item
             val updatedItem = TodoData(
-                id = args.currentItem.id,
-                title = title,
-                priority = mSharedViewModel.parsePriority(getPriority),
-                description = description
+                args.CurrentItem.id,
+                title,
+                mSharedViewModel.parsePriority(getPriority),
+                description
             )
-
-            mTodoViewModel.updateData(updatedItem)
-            Toast.makeText(context, "Successfully updated!", Toast.LENGTH_SHORT).show()
-
+            mToDoViewModel.updateData(updatedItem)
+            Toast.makeText(requireContext(), "Successfully updated!", Toast.LENGTH_SHORT).show()
             // Navigate back
             findNavController().navigate(R.id.action_updateFragment_to_listFragment)
         } else {
-            Toast.makeText(context, "Please fill out all fields!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Please fill out all fields.", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
+    // Show AlertDialog to Confirm Item Removal
     private fun confirmItemRemoval() {
-        val builder = AlertDialog.Builder(context)
-        builder.setPositiveButton("YES") { _, _ ->
-            mTodoViewModel.deleteItem(args.currentItem)
-
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setPositiveButton("Yes") { _, _ ->
+            mToDoViewModel.deleteItem(args.CurrentItem)
             Toast.makeText(
-                context,
-                "Successfully Removed: ${args.currentItem.title}!",
+                requireContext(),
+                "Successfully Removed: ${args.CurrentItem.title}",
                 Toast.LENGTH_SHORT
             ).show()
-
             findNavController().navigate(R.id.action_updateFragment_to_listFragment)
         }
-
-        builder.setNegativeButton("NO") { _, _ -> }
-        builder.setTitle("Delete '${args.currentItem.title}'?")
-        builder.setMessage("Are you sure you want to remove '${args.currentItem.title}'?")
+        builder.setNegativeButton("No") { _, _ -> }
+        builder.setTitle("Delete '${args.CurrentItem.title}'?")
+        builder.setMessage("Are you sure you want to remove '${args.CurrentItem.title}'?")
         builder.create().show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

@@ -3,11 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-<!--    <data>-->
-<!--        <variable-->
-<!--            name="args"-->
-<!--            type="com.example.todo.fragment.update.UpdateFragmentArgs" />-->
-<!--    </data>-->
+    <data>
+        <variable
+            name="args"
+            type="com.example.todo.fragment.update.UpdateFragmentArgs" />
+    </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -25,6 +25,7 @@
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
             android:background="@drawable/custom_input"
+            android:text="@{args.CurrentItem.title}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -39,6 +40,7 @@
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:background="@drawable/custom_input"
+            android:parsePriorityToInt="@{args.CurrentItem.priority}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -57,6 +59,7 @@
             android:paddingTop="16dp"
             android:gravity="top|start"
             android:inputType="textMultiLine"
+            android:text="@{args.CurrentItem.description}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
