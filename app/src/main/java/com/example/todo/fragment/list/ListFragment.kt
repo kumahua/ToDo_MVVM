@@ -79,7 +79,7 @@ class ListFragment : Fragment(), OnQueryTextListener {
                         mToDoViewModel.sortByLowPriority.observe(viewLifecycleOwner) {
                             adapter.setData(it)
                         }
-                    android.R.id.home -> requireActivity().onBackPressed()
+                    android.R.id.home -> requireActivity().onBackPressedDispatcher.onBackPressed()
                 }
                 return true
             }
