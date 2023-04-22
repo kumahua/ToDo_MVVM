@@ -1,9 +1,9 @@
 plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
-    id 'kotlin-android-extensions'
-    id 'androidx.navigation.safeargs.kotlin'
+    id('com.android.application')
+    id('kotlin-android')
+    id('kotlin-kapt')
+    id('androidx.navigation.safeargs.kotlin')
+    id('kotlin-parcelize')
 }
 
 android {
@@ -37,6 +37,8 @@ android {
         dataBinding true
         viewBinding true
     }
+
+    // 設置生成的NavigationArgs代碼的源目錄
     sourceSets {
         main {
             kotlin {
