@@ -16,8 +16,6 @@ import com.example.todo.data.models.TodoData
 import com.example.todo.data.viewmodel.TodoViewModel
 import com.example.todo.databinding.FragmentUpdateBinding
 import com.example.todo.fragment.SharedViewModel
-import kotlinx.android.synthetic.main.fragment_update.*
-import kotlinx.android.synthetic.main.fragment_update.view.*
 
 class UpdateFragment : Fragment() {
 
@@ -45,6 +43,7 @@ class UpdateFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object: MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {

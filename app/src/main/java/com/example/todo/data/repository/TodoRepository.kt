@@ -1,7 +1,6 @@
 package com.example.todo.data.repository
 
 import androidx.lifecycle.LiveData
-import androidx.room.Query
 import com.example.todo.data.TodoDao
 import com.example.todo.data.models.TodoData
 

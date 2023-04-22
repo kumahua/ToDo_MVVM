@@ -3,8 +3,9 @@ package com.example.todo.fragment.list
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.*
-import android.widget.SearchView
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.SearchView.OnQueryTextListener
 import androidx.fragment.app.Fragment
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -18,9 +19,10 @@ import com.example.todo.databinding.FragmentListBinding
 import com.example.todo.fragment.SharedViewModel
 import com.example.todo.fragment.list.adapter.ListAdapter
 import com.example.todo.utils.hideKeyboard
+import com.example.todo.utils.observeOnce
 import com.google.android.material.snackbar.Snackbar
 
-class ListFragment : Fragment(), SearchView.OnQueryTextListener {
+class ListFragment : Fragment(), OnQueryTextListener {
 
     private val mToDoViewModel: TodoViewModel by viewModels()
     private val mSharedViewModel: SharedViewModel by viewModels()
@@ -54,7 +56,35 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupMenu()
+
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.list_fragment_menu, menu)
+
+                val search = menu.findItem(R.id.menu_search)
+                val searchView = search.actionView as? SearchView
+                searchView?.isSubmitButtonEnabled = true
+                searchView?.setOnQueryTextListener(this@ListFragment)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                when (menuItem.itemId) {
+                    R.id.menu_delete_all -> confirmRemoval()
+                    R.id.menu_priority_high ->
+                        mToDoViewModel.sortByHighPriority.observe(viewLifecycleOwner) {
+                            adapter.setData(it)
+                        }
+                    R.id.menu_priority_low ->
+                        mToDoViewModel.sortByLowPriority.observe(viewLifecycleOwner) {
+                            adapter.setData(it)
+                        }
+                    android.R.id.home -> requireActivity().onBackPressed()
+                }
+                return true
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
     }
 
     override fun onQueryTextSubmit(query: String?): Boolean {
@@ -69,53 +99,6 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
             searchThroughDatabase(query)
         }
         return true
-    }
-
-    private fun setupMenu() {
-        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
-
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.list_fragment_menu, menu)
-
-                val search = menu.findItem(R.id.menu_search)
-                val searchView = search.actionView as? SearchView
-                searchView?.isSubmitButtonEnabled = true
-                searchView?.setOnQueryTextListener(this@ListFragment)
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                // Validate and handle the selected menu item
-                when (menuItem.itemId) {
-                    R.id.menu_delete_all -> confirmRemoval()
-
-                    R.id.menu_priority_high -> mToDoViewModel.sortByHighPriority.observe(viewLifecycleOwner) {
-                        adapter.setData(it)
-                    }
-
-                    R.id.menu_priority_low -> mToDoViewModel.sortByLowPriority.observe(viewLifecycleOwner) {
-                        adapter.setData(it)
-                    }
-                }
-                return true
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-    }
-
-    private fun confirmRemoval() {
-        val builder = AlertDialog.Builder(context)
-        builder.setPositiveButton("YES") { _, _ ->
-            mToDoViewModel.deleteAll()
-
-            Toast.makeText(
-                context,
-                "Successfully Removed Everything!",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-        builder.setNegativeButton("NO") { _, _ -> }
-        builder.setTitle("Delete Everything?")
-        builder.setMessage("Are you sure you want to remove Everything?")
-        builder.create().show()
     }
 
     private fun setupRecyclerview() {
@@ -137,16 +120,17 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
                 mToDoViewModel.deleteItem(deletedItem)
                 adapter.notifyItemRemoved(viewHolder.adapterPosition)
                 // Restore Deleted Item
-                restoreDeleteData(viewHolder.itemView, deletedItem, viewHolder.adapterPosition)
+                restoreDeleteData(viewHolder.itemView, deletedItem)
             }
         }
         val itemTouchHelper = ItemTouchHelper(swipeToDeleteCallback)
         itemTouchHelper.attachToRecyclerView(recyclerView)
     }
 
-    private fun restoreDeleteData(view: View, deletedItem: TodoData, position: Int) {
+    private fun restoreDeleteData(view: View, deletedItem: TodoData) {
         val snackBar = Snackbar.make(
-            view, "Deleted '${deletedItem.title}'", Snackbar.LENGTH_LONG
+            view, "Deleted '${deletedItem.title}'",
+            Snackbar.LENGTH_LONG
         )
         snackBar.setAction("Undo") {
             mToDoViewModel.insertData(deletedItem)
@@ -155,25 +139,30 @@ class ListFragment : Fragment(), SearchView.OnQueryTextListener {
     }
 
     private fun searchThroughDatabase(query: String) {
-        var searchQuery = query
-        searchQuery = "%$searchQuery%"
+        val searchQuery = "%$query%"
 
-        mToDoViewModel.searchDatabase(searchQuery).observe(this) { list ->
+        mToDoViewModel.searchDatabase(searchQuery).observeOnce(this) { list ->
             list?.let {
                 adapter.setData(it)
             }
         }
     }
 
-    private fun showEmptyDatabaseViews(emptyDatabase: Boolean) {
+    private fun confirmRemoval() {
+        val builder = AlertDialog.Builder(context)
+        builder.setPositiveButton("YES") { _, _ ->
+            mToDoViewModel.deleteAll()
 
-        if (emptyDatabase) {
-            binding.noDataImageView.visibility = View.VISIBLE
-            binding.noDataTextView.visibility = View.VISIBLE
-        } else {
-            binding.noDataImageView.visibility = View.GONE
-            binding.noDataTextView.visibility = View.GONE
+            Toast.makeText(
+                context,
+                "Successfully Removed Everything!",
+                Toast.LENGTH_SHORT
+            ).show()
         }
+        builder.setNegativeButton("NO") { _, _ -> }
+        builder.setTitle("Delete Everything?")
+        builder.setMessage("Are you sure you want to remove Everything?")
+        builder.create().show()
     }
 
     override fun onDestroy() {

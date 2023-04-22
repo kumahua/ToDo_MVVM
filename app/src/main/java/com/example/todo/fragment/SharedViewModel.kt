@@ -26,23 +26,17 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             when (position) {
                 0 -> {
                     (parent?.getChildAt(0) as TextView).setTextColor(
-                        ContextCompat.getColor
-                            (application, R.color.red
-                        )
+                        ContextCompat.getColor(application, R.color.red)
                     )
                 }
                 1 -> {
                     (parent?.getChildAt(0) as TextView).setTextColor(
-                        ContextCompat.getColor(
-                            application, R.color.yellow
-                        )
+                        ContextCompat.getColor(application, R.color.yellow)
                     )
                 }
                 2 -> {
                     (parent?.getChildAt(0) as TextView).setTextColor(
-                        ContextCompat.getColor(
-                            application, R.color.green
-                        )
+                        ContextCompat.getColor(application, R.color.green)
                     )
                 }
             }
@@ -67,10 +61,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             "Low Priority" -> {
                 Priority.LOW
             }
-            else -> throw Exception("priority not match $priority")
+            else -> Priority.LOW
         }
     }
-
-    fun parsePriorityToInt(priority: Priority) = priority.ordinal
-
 }
